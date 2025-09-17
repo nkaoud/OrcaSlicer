@@ -343,6 +343,11 @@ public:
     static const std::string SECTION_MATERIALS;
     static const std::string SECTION_EMBOSS_STYLE;
 
+    // To add Filament-0 setting:
+    bool filament_numbering_zero_based = false;
+
+
+
 private:
 	template<typename T>
 	bool get_3dmouse_device_numeric_value(const std::string &device_name, const char *parameter_name, T &out) const 
