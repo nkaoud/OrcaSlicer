@@ -289,6 +289,12 @@ void AppConfig::set_defaults()
     if (get("show_daily_tips").empty()) {
         set_bool("show_daily_tips", true);
     }
+
+// Add this line inside the set_defaults() function in AppConfig.cpp
+    if (get("filament_numbering_zero_based").empty()) {
+        set_bool("filament_numbering_zero_based", false);
+	}
+	
     //true is auto calculate
     if (get("auto_calculate").empty()) {
         set_bool("auto_calculate", true);
