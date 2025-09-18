@@ -1948,10 +1948,10 @@ void MenuFactory::append_menu_item_change_filament(wxMenu* menu)
         wxString item_name = _L("Default");
 
         if (i > 0) {
-            auto preset = wxGetapp().preset_bundle->filaments.find_preset(wxGetapp().preset_bundle->filament_presets[i - 1]);
+            auto preset = wxGetApp().preset_bundle->filaments.find_preset(wxGetApp().preset_bundle->filament_presets[i - 1]);
             if (preset == nullptr) {
                 // YOUR CORRECTED LOGIC
-                bool zero_based = wxGetapp().app_config->get_bool("filament_numbering_zero_based");
+                bool zero_based = wxGetApp().app_config->get_bool("filament_numbering_zero_based");
                 int label_num = zero_based ? (i - 1) : i;
                 if (label_num < 0) label_num = 0;
                 item_name = wxString::Format(_L("Filament %d"), label_num);
