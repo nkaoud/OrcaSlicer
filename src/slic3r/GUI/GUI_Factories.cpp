@@ -869,6 +869,9 @@ void MenuFactory::append_menu_item_replace_with_stl(wxMenu *menu)
         []() { return plater()->can_replace_with_stl(); }, m_parent);
 }
 
+
+
+
 void MenuFactory::append_menu_item_change_extruder(wxMenu* menu)
 {
     // BBS
@@ -908,26 +911,18 @@ void MenuFactory::append_menu_item_change_extruder(wxMenu* menu)
         wxString item_name = _L("Default");
 
         if (i > 0) {
-            auto preset = wxGetApp().preset_bundle->filaments.find_preset(wxGetApp().preset_bundle->filament_presets[i - 1]);
-            if (preset == nullptr) {
-                // =========================================================================================
-                // CORRECTED LOGIC APPLIED HERE
-                // =========================================================================================
-                
-                // 1. Get the user's preference from the application config.
-                bool zero_based = wxGetApp().app_config->get_bool("filament_numbering_zero_based");
-                
-                // 2. Determine the number to display based on the setting.
-                int label_num = zero_based ? (i - 1) : i;
-                if (label_num < 0) label_num = 0; // Only needed if you want to avoid ever seeing "Filament -1"
-                
-                // 3. Format the string with the correct number.
-                item_name = wxString::Format(_L("Filament %d"), label_num);
-                
-                // =========================================================================================
+            // FIX 1: Read the setting and calculate the label number BEFORE the if/else.
+            bool zero_based = wxGetApp().app_config->get_bool("filament_numbering_zero_based");
+            int label_num = zero_based ? (i - 1) : i;
 
+            auto preset = wxGetApp().preset_bundle->filaments.find_preset(wxGetApp().preset_bundle->filament_presets[i - 1]);
+            
+            if (preset == nullptr) {
+                // FIX 2: Use the pre-calculated label_num here.
+                item_name = wxString::Format(_L("Filament %d"), label_num);
             } else {
-                item_name = from_u8(preset->label(false));
+                // FIX 3: Prepend the label_num to the filament preset name.
+                item_name = wxString::Format("%d - ", label_num) + from_u8(preset->label(false));
             }
         }
 
@@ -948,6 +943,8 @@ void MenuFactory::append_menu_item_change_extruder(wxMenu* menu)
 
     menu->AppendSubMenu(extruder_selection_menu, name);
 }
+
+
 
 
 void MenuFactory::append_menu_item_scale_selection_to_fit_print_volume(wxMenu* menu)
@@ -1899,9 +1896,10 @@ void MenuFactory::append_menu_item_per_object_settings(wxMenu* menu)
         }, m_parent);
 }
 
-// This is the corrected version of the function
+
 void MenuFactory::append_menu_item_change_filament(wxMenu* menu)
 {
+    // ... (the initial setup code is the same) ...
     const std::vector<wxString> names = { _L("Change Filament"), _L("Set Filament for selected items") };
     for (const wxString& name : names) {
         const int item_id = menu->FindItem(name);
@@ -1913,9 +1911,6 @@ void MenuFactory::append_menu_item_change_filament(wxMenu* menu)
     if (filaments_cnt <= 1)
         return;
 
-    // =========================================================================================
-    // FIX: Add the missing declarations for 'sels', 'icons', 'extruder_selection_menu', and 'name'
-    // =========================================================================================
     wxDataViewItemArray sels;
     obj_list()->GetSelections(sels);
     if (sels.IsEmpty())
@@ -1924,7 +1919,6 @@ void MenuFactory::append_menu_item_change_filament(wxMenu* menu)
     std::vector<wxBitmap*> icons = get_extruder_color_icons(true);
     wxMenu* extruder_selection_menu = new wxMenu();
     const wxString& name = sels.Count() == 1 ? names[0] : names[1];
-    // =========================================================================================
     
     bool has_modifier = false;
     for (auto sel : sels) {
@@ -1934,11 +1928,11 @@ void MenuFactory::append_menu_item_change_filament(wxMenu* menu)
         }
     }
 
-    // This is the original loop, which we will modify
     for (int i = has_modifier ? 0 : 1; i <= filaments_cnt; i++)
     {
-        bool is_active_extruder = false; // Simplified for clarity
-        int initial_extruder = -1; // negative value for multiple object/part selection
+        // ... (active extruder logic is the same) ...
+        bool is_active_extruder = false;
+        int initial_extruder = -1;
         if (sels.Count() == 1) {
             const ModelConfig& config = obj_list()->get_item_config(sels[0]);
             initial_extruder = config.has("extruder") ? config.extruder() : 1;
@@ -1948,15 +1942,19 @@ void MenuFactory::append_menu_item_change_filament(wxMenu* menu)
         wxString item_name = _L("Default");
 
         if (i > 0) {
+            // FIX 1: Read the setting and calculate the label number BEFORE the if/else.
+            bool zero_based = wxGetApp().app_config->get_bool("filament_numbering_zero_based");
+            int label_num = zero_based ? (i - 1) : i;
+            if (label_num < 0) label_num = 0; // Should not happen with current loop logic, but good practice.
+
             auto preset = wxGetApp().preset_bundle->filaments.find_preset(wxGetApp().preset_bundle->filament_presets[i - 1]);
+            
             if (preset == nullptr) {
-                // YOUR CORRECTED LOGIC
-                bool zero_based = wxGetApp().app_config->get_bool("filament_numbering_zero_based");
-                int label_num = zero_based ? (i - 1) : i;
-                if (label_num < 0) label_num = 0;
+                // FIX 2: Use the pre-calculated label_num here.
                 item_name = wxString::Format(_L("Filament %d"), label_num);
             } else {
-                item_name = from_u8(preset->label(false));
+                // FIX 3: Prepend the label_num to the filament preset name.
+                item_name = wxString::Format("%d - ", label_num) + from_u8(preset->label(false));
             }
         }
 
@@ -1968,9 +1966,11 @@ void MenuFactory::append_menu_item_change_filament(wxMenu* menu)
             [i](wxCommandEvent&) { obj_list()->set_extruder_for_selected_items(i); }, i == 0 ? wxNullBitmap : *icons[i - 1], menu,
             [is_active_extruder]() { return !is_active_extruder; }, m_parent);
     }
-    // FIX: The original final line was slightly incorrect. It should be AppendSubMenu.
+    
     menu->AppendSubMenu(extruder_selection_menu, name, _L("Change Filament"));
 }
+
+
 
 void MenuFactory::append_menu_item_set_printable(wxMenu* menu)
 {
